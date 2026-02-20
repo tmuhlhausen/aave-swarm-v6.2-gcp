@@ -17,7 +17,7 @@ contract AaveBotExecutor is FlashLoanSimpleReceiverBase, ReentrancyGuard, Ownabl
         address initiator,
         bytes calldata params
     ) external override nonReentrant returns (bool) {
-        require(msg.sender == address(POOL), "Not Aave");
+        require(msg.sender == address(POOL), "Not Aave Pool");
         require(initiator == address(this), "Initiator mismatch");
 
         (address dex, bytes memory swapData, uint256 minOut) = abi.decode(params, (address, bytes, uint256));
