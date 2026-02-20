@@ -25,7 +25,7 @@ jobs:
             --zone=northamerica-northeast2-a \
             --machine-type=e2-small \
             --num-nodes=1 \
-            --disk-size=10 \
+            --disk-size=50 \
             --enable-autoscaling \
             --min-nodes=1 \
             --max-nodes=5
