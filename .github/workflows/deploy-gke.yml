@@ -1,12 +1,11 @@
-name: Deploy GKE Swarm (Google Cloud Toronto)
-on: workflow_dispatch
+name: Deploy GKE Swarm (Free-Tier Toronto)
+
+on:
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
 
     steps:
       - name: Checkout repository
@@ -15,42 +14,30 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: swarm-deployer@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Delete existing cluster (safe recreate)
+      - name: Create GKE Standard Zonal Cluster (Free-Tier Friendly)
         run: |
-          gcloud container clusters delete aave-swarm-v6-2 \
-            --location=northamerica-northeast2 \
-            --quiet || true
-
-      - name: Create GKE Autopilot Cluster (Toronto)
-        run: |
-          gcloud container clusters create-auto aave-swarm-v6-2 \
-            --location=northamerica-northeast2 \
-            --release-channel=regular
+          gcloud container clusters create aave-swarm-free \
+            --zone=northamerica-northeast2-a \
+            --machine-type=e2-small \
+            --num-nodes=1 \
+            --disk-size=10 \
+            --enable-autoscaling \
+            --min-nodes=1 \
+            --max-nodes=5
 
       - name: Configure kubectl
         run: |
-          gcloud container clusters get-credentials aave-swarm-v6-2 \
-            --location=northamerica-northeast2
+          gcloud container clusters get-credentials aave-swarm-free --zone=northamerica-northeast2-a
 
       - name: Build and Push Docker Image
         run: |
           gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/swarm-agents:latest .
 
-      - name: Deploy Swarm Agents to GKE + ZERO INITIAL COST
+      - name: Deploy Swarm Agents (CPU-only free-tier)
         run: |
           kubectl apply -f k8s/
-          kubectl apply -f k8s/hpa.yaml
-          
-          # === ZERO-COST MODE (exactly what you asked for) ===
-          echo "Scaling ALL agents to 0 replicas → $0 compute cost right now"
-          kubectl scale deployment --all --replicas=0 || true
-          kubectl scale statefulset --all --replicas=0 || true
-          
-          echo "✅ Cluster is live in Toronto at ZERO cost."
-          echo "To start the swarm later: kubectl scale deployment <agent-name> --replicas=3"
