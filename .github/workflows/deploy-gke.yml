@@ -23,10 +23,9 @@ jobs:
         run: |
           echo "Checking if cluster aave-swarm-free already exists..."
           if gcloud container clusters describe aave-swarm-free --zone=northamerica-northeast2-a --quiet 2>/dev/null; then
-            echo "✅ Cluster aave-swarm-free ALREADY EXISTS in northamerica-northeast2-a."
-            echo "   Bypassing creation (as requested)."
+            echo "✅ Cluster aave-swarm-free ALREADY EXISTS → bypassing creation."
           else
-            echo "Creating new cluster aave-swarm-free..."
+            echo "Creating new cluster aave-swarm-free (free-tier friendly)..."
             gcloud container clusters create aave-swarm-free \
               --zone=northamerica-northeast2-a \
               --machine-type=e2-small \
@@ -36,11 +35,20 @@ jobs:
               --min-nodes=1 \
               --max-nodes=5 \
               --enable-ip-alias
-            echo "✅ Cluster created successfully."
+            echo "✅ Cluster created."
           fi
 
-      - name: Configure kubectl
+      - name: Wait for cluster to be fully RUNNING (fixes "not RUNNING" warning)
         run: |
+          echo "Waiting for cluster to reach RUNNING state (this can take 5-20 minutes on first creation)..."
+          gcloud container clusters wait aave-swarm-free \
+            --zone=northamerica-northeast2-a \
+            --timeout=25m
+          echo "✅ Cluster is now RUNNING!"
+
+      - name: Configure kubectl + install auth plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin --quiet
           gcloud container clusters get-credentials aave-swarm-free --zone=northamerica-northeast2-a
 
       - name: Build and Push Docker Image
@@ -50,3 +58,7 @@ jobs:
       - name: Deploy Swarm Agents (CPU-only free-tier)
         run: |
           kubectl apply -f k8s/
+          
+          # Optional ZERO-COST line (uncomment if you want $0 until you manually scale up)
+          # kubectl scale deployment --all --replicas=0 || true
+          # echo "All agents scaled to 0 → zero compute cost right now"
