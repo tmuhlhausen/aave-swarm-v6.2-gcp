@@ -1,20 +1,25 @@
-name: Deploy GKE Swarm (Google Cloud)
+name: Deploy GKE Swarm (Google Cloud Toronto)
+
 on:
   workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud using Service Account Key
+        uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: swarm-deployer@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
-      - uses: google-github-actions/setup-gcloud@v2
-      - name: Deploy GKE Autopilot
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Create GKE Autopilot Cluster (Toronto)
         run: |
           gcloud container clusters create-auto aave-swarm-v6-2 \
             --region=northamerica-northeast2 \
@@ -22,7 +27,16 @@ jobs:
             --spot \
             --release-channel=regular \
             --machine-type=n1-standard-4
-      - name: Build & Deploy Swarm Agents
+
+      - name: Configure kubectl
         run: |
-          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/swarm-agents .
+          gcloud container clusters get-credentials aave-swarm-v6-2 --region=northamerica-northeast2
+
+      - name: Build and Push Docker Image
+        run: |
+          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/swarm-agents:latest .
+
+      - name: Deploy Swarm Agents to GKE
+        run: |
           kubectl apply -f k8s/
+          kubectl apply -f k8s/hpa.yaml
