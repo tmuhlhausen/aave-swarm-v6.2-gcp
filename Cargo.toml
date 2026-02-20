@@ -4,5 +4,13 @@ version = "6.2.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1.40", features = ["full"] }
-# ... (full deps for agents, tch for GPU, etc.)
+tokio = { version = "1.40", features = ["full", "rt-multi-thread"] }
+alloy = { version = "0.3", features = ["full"] }
+revm = { version = "19", features = ["std"] }
+tch = { version = "0.15", features = ["cuda"] }
+rayon = "1.10"
+petgraph = "0.6"
+serde = { version = "1.0", features = ["derive"] }
+redis = { version = "0.26", features = ["tokio-comp"] }
+log = "0.4"
+env_logger = "0.11"
