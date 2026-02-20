@@ -19,13 +19,13 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Create GKE Standard Zonal Cluster (Free-Tier Friendly) - BYPASS IF EXISTS
+      - name: Create GKE Standard Zonal Cluster - BYPASS IF EXISTS
         run: |
           echo "Checking if cluster aave-swarm-free already exists..."
           if gcloud container clusters describe aave-swarm-free --zone=northamerica-northeast2-a --quiet 2>/dev/null; then
-            echo "✅ Cluster aave-swarm-free ALREADY EXISTS → bypassing creation."
+            echo "✅ Cluster already exists → bypassing creation."
           else
-            echo "Creating new cluster aave-swarm-free (free-tier friendly)..."
+            echo "Creating new cluster..."
             gcloud container clusters create aave-swarm-free \
               --zone=northamerica-northeast2-a \
               --machine-type=e2-small \
@@ -43,14 +43,27 @@ jobs:
           gcloud components install gke-gcloud-auth-plugin --quiet
           gcloud container clusters get-credentials aave-swarm-free --zone=northamerica-northeast2-a
 
-      - name: Build and Push Docker Image
-        run: |
-          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/swarm-agents:latest .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Deploy Swarm Agents (CPU-only free-tier)
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Build and Push Docker Image (Native Docker - No Cloud Build)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: gcr.io/${{ secrets.GCP_PROJECT_ID }}/swarm-agents:latest
+
+      - name: Deploy Swarm Agents (Free-Tier)
         run: |
           kubectl apply -f k8s/
           
-          # Optional ZERO-COST line (uncomment if you want $0 until you manually scale up)
+          # Optional: zero-cost mode (uncomment if you want $0 until you scale up)
           # kubectl scale deployment --all --replicas=0 || true
-          # echo "All agents scaled to 0 → zero compute cost right now"
+          # echo "All agents scaled to 0 → zero compute cost"
