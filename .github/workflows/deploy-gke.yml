@@ -1,7 +1,7 @@
 name: Deploy GKE Swarm (Free-Tier Toronto)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Run manually from the Actions tab
 
 jobs:
   deploy:
@@ -19,16 +19,25 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Create GKE Standard Zonal Cluster (Free-Tier Friendly)
+      - name: Create GKE Standard Zonal Cluster (Free-Tier Friendly) - BYPASS IF EXISTS
         run: |
-          gcloud container clusters create aave-swarm-free \
-            --zone=northamerica-northeast2-a \
-            --machine-type=e2-small \
-            --num-nodes=1 \
-            --disk-size=50 \
-            --enable-autoscaling \
-            --min-nodes=1 \
-            --max-nodes=5
+          echo "Checking if cluster aave-swarm-free already exists..."
+          if gcloud container clusters describe aave-swarm-free --zone=northamerica-northeast2-a --quiet 2>/dev/null; then
+            echo "✅ Cluster aave-swarm-free ALREADY EXISTS in northamerica-northeast2-a."
+            echo "   Bypassing creation (as requested)."
+          else
+            echo "Creating new cluster aave-swarm-free..."
+            gcloud container clusters create aave-swarm-free \
+              --zone=northamerica-northeast2-a \
+              --machine-type=e2-small \
+              --num-nodes=1 \
+              --disk-size=30 \
+              --enable-autoscaling \
+              --min-nodes=1 \
+              --max-nodes=5 \
+              --enable-ip-alias
+            echo "✅ Cluster created successfully."
+          fi
 
       - name: Configure kubectl
         run: |
