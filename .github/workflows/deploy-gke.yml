@@ -38,14 +38,6 @@ jobs:
             echo "✅ Cluster created."
           fi
 
-      - name: Wait for cluster to be fully RUNNING (fixes "not RUNNING" warning)
-        run: |
-          echo "Waiting for cluster to reach RUNNING state (this can take 5-20 minutes on first creation)..."
-          gcloud container clusters wait aave-swarm-free \
-            --zone=northamerica-northeast2-a \
-            --timeout=25m
-          echo "✅ Cluster is now RUNNING!"
-
       - name: Configure kubectl + install auth plugin
         run: |
           gcloud components install gke-gcloud-auth-plugin --quiet
