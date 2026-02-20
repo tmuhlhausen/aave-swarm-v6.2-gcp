@@ -1,5 +1,5 @@
 name: Deploy GKE Swarm (Google Cloud Toronto)
-on: workflow_run
+on: workflow_dispatch
 
 jobs:
   deploy:
