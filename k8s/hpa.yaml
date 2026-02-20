@@ -1,0 +1,18 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: swarm-hpa
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: aave-swarm-agents
+  minReplicas: 1
+  maxReplicas: 50
+  metrics:
+  - type: External
+    external:
+      metric:
+        name: profit_per_hour
+      target:
+        type: AverageValue
+        averageValue: "2.2"  # Only scale when ROI >2.2×
