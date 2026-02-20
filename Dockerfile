@@ -1,12 +1,13 @@
 # =============================================
 # AAVE SWARM v6.2 — CPU-ONLY DOCKERFILE (FREE-TIER READY)
-# Fixed Feb 20 2026 — robust Cargo.lock handling
+# FINAL FIXED VERSION — Feb 20 2026
+# Uses Rust 1.93 (current stable) + robust Cargo.lock handling
 # =============================================
 
-FROM rust:1.85 AS builder
+FROM rust:1.93 AS builder
 WORKDIR /app
 
-# Copy Cargo manifests (Cargo.lock is optional)
+# Copy Cargo files (Cargo.lock is optional — no error if missing)
 COPY Cargo.toml ./
 COPY Cargo.lock* ./
 
@@ -14,23 +15,23 @@ COPY Cargo.lock* ./
 RUN mkdir -p src && \
     echo "fn main() { println!(\"dummy\"); }" > src/main.rs
 
-# Build dependencies (this layer is cached)
+# Build dependencies (cached layer)
 RUN cargo build --release
 
 # Remove dummy source
 RUN rm -rf src
 
-# Now copy the real source code
+# Copy real source code
 COPY . .
 
 # Force pure CPU build (no CUDA)
 ENV TORCH_CUDA_VERSION=""
 
-# Final application build
+# Final build
 RUN cargo build --release
 
 # =============================================
-# Minimal runtime image (~80MB, no NVIDIA)
+# Minimal runtime (~80MB, no NVIDIA)
 # =============================================
 FROM debian:bookworm-slim
 
