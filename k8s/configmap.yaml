@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swarm-config
+data:
+  RPC_ARBITRUM_BLOXROUTE: "https://your-bloxroute-key-here"
+  REGION: "northamerica-northeast2"
+  MIN_PROFIT_MULTIPLIER: "2.2"
+  BOT_FACTORY_ADDRESS: "0x0000000000000000000000000000000000000000"  # Will be updated after Remix deploy
