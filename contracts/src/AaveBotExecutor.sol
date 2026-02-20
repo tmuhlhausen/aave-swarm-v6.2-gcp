@@ -8,7 +8,11 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AaveBotExecutor is FlashLoanSimpleReceiverBase, ReentrancyGuard, Ownable {
-    constructor() FlashLoanSimpleReceiverBase(IPoolAddressesProvider(0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb)) {}
+    
+    constructor() 
+        FlashLoanSimpleReceiverBase(IPoolAddressesProvider(0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb))
+        Ownable(msg.sender)
+    {}
 
     function executeOperation(
         address asset,
@@ -20,14 +24,22 @@ contract AaveBotExecutor is FlashLoanSimpleReceiverBase, ReentrancyGuard, Ownabl
         require(msg.sender == address(POOL), "Not Aave Pool");
         require(initiator == address(this), "Initiator mismatch");
 
+        // Decode parameters from the bot (target DEX, swap calldata, minimum output)
         (address dex, bytes memory swapData, uint256 minOut) = abi.decode(params, (address, bytes, uint256));
+
+        // Execute the swap
         (bool success,) = dex.call(swapData);
         require(success, "Swap failed");
 
-        uint256 total = amount + premium;
-        require(IERC20(asset).balanceOf(address(this)) >= total * 1025 / 10000, "Safety buffer fail");
+        // Safety check: ensure we received at least minOut after the swap
+        uint256 balanceAfter = IERC20(asset).balanceOf(address(this));
+        uint256 totalDebt = amount + premium;
+        require(balanceAfter >= totalDebt + minOut, "Insufficient output (below minOut)");
 
-        IERC20(asset).approve(address(POOL), total);
+        // Repay Aave + 0.25% safety buffer
+        require(balanceAfter >= totalDebt * 1025 / 10000, "Safety buffer fail");
+
+        IERC20(asset).approve(address(POOL), totalDebt);
         return true;
     }
 
