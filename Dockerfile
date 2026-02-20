@@ -1,14 +1,12 @@
 # === CPU-ONLY Dockerfile for Free-Tier GKE (e2-small) ===
-# This builds without any GPU/CUDA dependencies
-
-FROM rust:1.80 as builder
+FROM rust:1.80 AS builder
 WORKDIR /app
 COPY . .
 
-# Build CPU-only (no --features gpu, no CUDA)
+# Build CPU-only — no CUDA, no GPU feature
 RUN cargo build --release
 
-# Lightweight runtime (no NVIDIA image needed)
+# Lightweight runtime (no NVIDIA base image needed)
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
