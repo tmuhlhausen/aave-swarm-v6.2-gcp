@@ -2,26 +2,33 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: aave-swarm-agents
+  namespace: default
 spec:
-  replicas: 1  # Auto-scaled by HPA
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aave-swarm
   template:
+    metadata:
+      labels:
+        app: aave-swarm
     spec:
       containers:
-      - name: swarm
-        image: gcr.io/YOUR_PROJECT_ID/swarm-agents:latest
+      - name: swarm-agents
+        image: gcr.io/${GCP_PROJECT_ID}/swarm-agents:latest
         resources:
           limits:
             nvidia.com/gpu: 1
-        env:
-        - name: RPC_ARBITRUM
-          valueFrom:
-            secretKeyRef:
-              name: bot-secrets
-              key: RPC_ARBITRUM_BLOXROUTE
-        - name: REGION
-          value: northamerica-northeast2
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+            nvidia.com/gpu: 1
+        envFrom:
+        - configMapRef:
+            name: swarm-config
       tolerations:
-      - key: "spot"
-        operator: "Equal"
-        value: "true"
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
         effect: "NoSchedule"
+      nodeSelector:
+        cloud.google.com/gke-spot: "true"
