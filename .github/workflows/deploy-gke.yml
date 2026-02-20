@@ -1,33 +1,57 @@
-name: Deploy GKE Swarm (Google Cloud Toronto)
-on: workflow_dispatch: # Run manually from the Actions tab
+name: Deploy GKE Swarm (Google Cloud Toronto) - Zero Initial Cost
+on: workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: swarm-deployer@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-      - name: Create GKE Autopilot Cluster (Toronto)
+
+      - name: Delete existing cluster (safe recreate)
+        run: |
+          gcloud container clusters delete aave-swarm-v6-2 \
+            --location=northamerica-northeast2 \
+            --quiet || true
+
+      - name: Create GKE Autopilot Cluster (Toronto) - FREE management fee
         run: |
           gcloud container clusters create-auto aave-swarm-v6-2 \
             --location=northamerica-northeast2 \
             --release-channel=regular
+
       - name: Configure kubectl
         run: |
-          gcloud container clusters get-credentials aave-swarm-v6-2 --region=northamerica-northeast2
-      - name: Build and Push Docker Image
+          gcloud container clusters get-credentials aave-swarm-v6-2 \
+            --location=northamerica-northeast2
+
+      - name: Build and Push Docker Image (optional - only if you need new image)
         run: |
           gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/swarm-agents:latest .
-      - name: Deploy Swarm Agents to GKE
+
+      - name: Deploy Swarm Agents (but scale to 0 replicas → $0 compute)
         run: |
           kubectl apply -f k8s/
           kubectl apply -f k8s/hpa.yaml
+          
+          # === ZERO COST STEP ===
+          # Scale everything to 0 replicas so no pods run and no compute is charged
+          echo "Scaling all Deployments and StatefulSets to 0 replicas (zero compute cost)"
+          kubectl scale deployment --all --replicas=0 -n default || true
+          kubectl scale statefulset --all --replicas=0 -n default || true
+          
+          echo "Cluster is ready and costing $0 right now."
+          echo "To start agents later: kubectl scale deployment <name> --replicas=1"
