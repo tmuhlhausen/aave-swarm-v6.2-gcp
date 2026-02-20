@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aave-swarm-agents
+spec:
+  replicas: 1  # Auto-scaled by HPA
+  template:
+    spec:
+      containers:
+      - name: swarm
+        image: gcr.io/YOUR_PROJECT_ID/swarm-agents:latest
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        env:
+        - name: RPC_ARBITRUM
+          valueFrom:
+            secretKeyRef:
+              name: bot-secrets
+              key: RPC_ARBITRUM_BLOXROUTE
+        - name: REGION
+          value: northamerica-northeast2
+      tolerations:
+      - key: "spot"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
