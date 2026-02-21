@@ -6,6 +6,23 @@ import NeuralMap from '../components/NeuralMap';
 import RiskSphere from '../components/RiskSphere';
 import TradeTimeline from '../components/TradeTimeline';
 import CommandPalette from '../components/CommandPalette';
+import { create } from 'zustand';
+
+const useSwarmStore = create((set) => ({
+  agents: [],
+  synergy: 0,
+  setLiveData: (data) => set({ agents: data.agents, synergy: data.synergy }),
+}));
+
+// In your component:
+useEffect(() => {
+  const ws = new WebSocket('wss://YOUR-CLUSTER-IP:8080/ws');   // replace with real LoadBalancer IP or Ingress
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    useSwarmStore.getState().setLiveData(data);
+  };
+  return () => ws.close();
+}, []);
 
 export default function SwarmNexusV72() {
   const [agents, setAgents] = useState(Array.from({ length: 5 }, (_, i) => ({ id: i, profit: Math.random() * 5000 - 1500 })));
