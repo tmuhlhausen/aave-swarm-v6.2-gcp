@@ -1,9 +1,5 @@
-use axum::{
-    extract::ws::{Message, WebSocket, WebSocketUpgrade},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::response::IntoResponse;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 
@@ -20,7 +16,7 @@ async fn handle_socket(mut socket: WebSocket, tx: Arc<broadcast::Sender<String>>
                     let _ = socket.send(Message::Text(msg)).await;
                 }
             }
-            _ = socket.recv() => break, // client disconnected
+            _ = socket.recv() => break,
         }
     }
 }
