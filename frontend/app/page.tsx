@@ -16,7 +16,7 @@ const useSwarmStore = create((set) => ({
 
 // In your component:
 useEffect(() => {
-  const ws = new WebSocket('wss://YOUR-CLUSTER-IP:8080/ws');   // replace with real LoadBalancer IP or Ingress
+  const ws = new WebSocket('wss://34.130.231.227:8080/ws');   // replace with real LoadBalancer IP or Ingress
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data);
     useSwarmStore.getState().setLiveData(data);
