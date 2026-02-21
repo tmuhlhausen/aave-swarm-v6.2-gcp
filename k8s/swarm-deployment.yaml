@@ -15,9 +15,9 @@ spec:
     spec:
       containers:
       - name: swarm-agents
-        image: northamerica-northeast2-docker.pkg.dev/aave-swarm-v6-2/swarm-agents/swarm-agents:latest
+        image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/swarm-agents:latest
         ports:
-        - containerPort: 8080          # WebSocket
+        - containerPort: 8080
         resources:
           requests:
             cpu: "2"
