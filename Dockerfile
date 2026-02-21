@@ -1,46 +1,34 @@
-# =============================================
-# AAVE SWARM v6.2 — CPU-ONLY DOCKERFILE (FREE-TIER READY)
-# FINAL FIXED VERSION — Feb 20 2026
-# Uses Rust 1.93 (current stable) + robust Cargo.lock handling
-# =============================================
-
+# Builder stage
 FROM rust:1.93 AS builder
 WORKDIR /app
 
-# Copy Cargo files (Cargo.lock is optional — no error if missing)
-COPY Cargo.toml ./
-COPY Cargo.lock* ./
-
-# Create dummy source to cache dependencies only
-RUN mkdir -p src && \
-    echo "fn main() { println!(\"dummy\"); }" > src/main.rs
-
-# Build dependencies (cached layer)
-RUN cargo build --release
-
-# Remove dummy source
-RUN rm -rf src
-
-# Copy real source code
-COPY . .
-
-# Force pure CPU build (no CUDA)
-ENV TORCH_CUDA_VERSION=""
-
-# Final build
-RUN cargo build --release
-
-# =============================================
-# Minimal runtime (~80MB, no NVIDIA)
-# =============================================
-FROM debian:bookworm-slim
-
+# System deps + libtorch (CPU 2.4.1)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    libssl3 \
-    && rm -rf /var/lib/apt/lists/*
+    build-essential pkg-config libssl-dev libclang-dev cmake curl unzip ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -L https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcpu.zip -o /tmp/libtorch.zip \
+    && unzip /tmp/libtorch.zip -d /app/ && rm /tmp/libtorch.zip
 
-COPY --from=builder /app/target/release/swarm-agents /usr/local/bin/swarm-agents
+ENV LIBTORCH=/app/libtorch
+ENV LD_LIBRARY_PATH=${LIBTORCH}/lib:$LD_LIBRARY_PATH
 
+COPY Cargo.toml Cargo.lock* ./
+RUN mkdir -p src && echo 'fn main(){}' > src/main.rs && cargo build --release && rm -rf src
+
+COPY . .
+# Frontend build
+COPY frontend/ ./frontend/
+RUN cd frontend && npm ci --frozen-lockfile && npm run build
+
+RUN cargo build --release
+
+# Runtime
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates libssl3 libgcc-s1 zlib1g && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/target/release/swarm-agents /usr/local/bin/
+COPY --from=builder /app/frontend/.next /app/frontend/.next  # static serve if you add axum later
+COPY --from=builder /app/libtorch /app/libtorch
+ENV LD_LIBRARY_PATH=/app/libtorch/lib
 EXPOSE 8080
 CMD ["swarm-agents"]
