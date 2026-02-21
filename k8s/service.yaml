@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: swarm-agents
+spec:
+  selector:
+    app: swarm-agents
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: LoadBalancer   # or ClusterIP if you use Ingress
