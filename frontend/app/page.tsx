@@ -53,7 +53,7 @@ export default function SwarmNexusV72() {
 
         {/* Center 3D Swarm */}
         <div className="col-span-7">
-          <Swarm3D agentsData={agents} />
+          <useSwarmStore((s) => s.agents) />
           <RiskSphere className="absolute top-12 right-12" />
         </div>
 
