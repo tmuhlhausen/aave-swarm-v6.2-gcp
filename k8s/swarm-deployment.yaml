@@ -16,19 +16,15 @@ spec:
       containers:
       - name: swarm-agents
         image: northamerica-northeast2-docker.pkg.dev/aave-swarm-v6-2/swarm-agents/swarm-agents:latest
+        ports:
+        - containerPort: 8080          # WebSocket
         resources:
-          limits:
-            nvidia.com/gpu: 1
           requests:
             cpu: "2"
             memory: "8Gi"
-            nvidia.com/gpu: 1
+          limits:
+            cpu: "4"
+            memory: "16Gi"
         envFrom:
         - configMapRef:
             name: swarm-config
-      tolerations:
-      - key: "nvidia.com/gpu"
-        operator: "Exists"
-        effect: "NoSchedule"
-      nodeSelector:
-        cloud.google.com/gke-spot: "true"
