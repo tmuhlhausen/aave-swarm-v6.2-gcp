@@ -2,10 +2,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: swarm-agents
+  namespace: default
 spec:
   selector:
-    app: swarm-agents
+    app: aave-swarm
   ports:
   - port: 8080
     targetPort: 8080
-  type: LoadBalancer   # or ClusterIP if you use Ingress
+  type: LoadBalancer
