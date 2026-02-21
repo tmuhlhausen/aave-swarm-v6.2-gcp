@@ -15,12 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && unzip /tmp/libtorch.zip -d /app/ \
     && rm /tmp/libtorch.zip
 
-# Critical: set BEFORE any cargo build
+# Critical: set BEFORE cargo build
 ENV LIBTORCH=/app/libtorch
 ENV LD_LIBRARY_PATH=/app/libtorch/lib
-ENV TORCH_CUDA_VERSION=""          # Force CPU-only
-ENV LIBTORCH_BYPASS_VERSION_CHECK=1  # Safety net (even though we match)
-
+# Force CPU-only
+ENV TORCH_CUDA_VERSION=""
+# Safety net (matches tch 0.15.0)
+ENV LIBTORCH_BYPASS_VERSION_CHECK=1
 # === Cargo dependency caching (dummy build) ===
 COPY Cargo.toml Cargo.lock* ./
 RUN mkdir -p src && \
