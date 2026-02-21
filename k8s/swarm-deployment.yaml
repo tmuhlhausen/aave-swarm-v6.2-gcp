@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: swarm-agents
-        image: gcr.io/${GCP_PROJECT_ID}/swarm-agents:latest
+        image: northamerica-northeast2-docker.pkg.dev/aave-swarm-v6-2/swarm-agents/swarm-agents:latest
         resources:
           limits:
             nvidia.com/gpu: 1
