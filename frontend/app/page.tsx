@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
-import Swarm3D from '../components/Swarm3D';
+import dynamic from 'next/dynamic';   // ← NEW
+
+// Dynamic imports with ssr: false (fixes R3F prerender error)
+const Swarm3D = dynamic(() => import('../components/Swarm3D'), { ssr: false });
+const RiskSphere = dynamic(() => import('../components/RiskSphere'), { ssr: false });
+
 import NeuralMap from '../components/NeuralMap';
-import RiskSphere from '../components/RiskSphere';
 import TradeTimeline from '../components/TradeTimeline';
 import CommandPalette from '../components/CommandPalette';
 import { create } from 'zustand';
