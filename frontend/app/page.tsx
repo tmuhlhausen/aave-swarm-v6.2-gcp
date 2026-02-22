@@ -34,7 +34,7 @@ export default function SwarmNexusV72() {
 
   // Real-time WebSocket to your live GKE swarm (connects to actual trading agents)
   useEffect(() => {
-    const ws = new WebSocket('wss://34.130.231.227:8080/ws'); // ← your current LoadBalancer IP
+    const ws = new WebSocket('wss://34.130.255.248:8080/ws'); // ← your current LoadBalancer IP
     ws.onopen = () => console.log('🟢 Connected to Aave Swarm Backend');
     ws.onmessage = (e) => {
       try {
