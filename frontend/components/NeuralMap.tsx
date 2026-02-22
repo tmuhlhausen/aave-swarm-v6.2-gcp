@@ -1,22 +1,20 @@
 'use client';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
+import { useEffect } from 'react';
 
 export default function NeuralMap({ agents }: { agents: any[] }) {
   return (
-    <div className="liquid-glass h-full rounded-3xl overflow-hidden">
-      <Canvas camera={{ position: [0,0,18] }}>
-        <ambientLight intensity={0.6} />
-        {agents.map((_, i) => (
-          <mesh key={i} position={[Math.sin(i)*6, Math.cos(i)*5, 0]}>
-            <sphereGeometry args={[0.8]} />
-            <meshStandardMaterial color="#00f5ff" emissive="#00f5ff" />
-          </mesh>
+    <div className="liquid-glass h-full p-6 rounded-3xl border border-cyan-500/30">
+      <div className="text-cyan-400 text-sm mb-4 font-mono">NEURAL SYNAPSE MAP</div>
+      <div className="space-y-3">
+        {agents.map((a, i) => (
+          <div key={i} className="flex justify-between text-sm">
+            <span>Agent {i+1}</span>
+            <span className={a.profit > 0 ? "text-emerald-400" : "text-red-400"}>
+              {a.profit.toFixed(0)} USD
+            </span>
+          </div>
         ))}
-        <OrbitControls enablePan={false} />
-      </Canvas>
-      <div className="absolute top-4 left-4 text-xs font-mono text-cyan-400">NEURAL LINKS • LIVE</div>
+      </div>
     </div>
   );
 }
