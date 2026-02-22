@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
-import Swarm3D from './components/Swarm3D.tsx';
-import NeuralMap from './components/NeuralMap.tsx';
-import RiskSphere from './components/RiskSphere.tsx';
-import TradeTimeline from './components/TradeTimeline.tsx';
-import CommandPalette from './components/CommandPalette.tsx';
+import Swarm3D from './components/Swarm3D';
+import NeuralMap from './components/NeuralMap';
+import RiskSphere from './components/RiskSphere';
+import TradeTimeline from './components/TradeTimeline';
+import CommandPalette from './components/CommandPalette';
 import { create } from 'zustand';
 
 const useSwarmStore = create((set) => ({
