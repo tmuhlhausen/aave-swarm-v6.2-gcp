@@ -9,11 +9,19 @@ import TradeTimeline from '../components/TradeTimeline';
 import CommandPalette from '../components/CommandPalette';
 import { create } from 'zustand';
 
-const useSwarmStore = create((set) => ({
+// === TYPED ZUSTAND STORE (fixes TS error) ===
+interface SwarmState {
+  agents: any[];
+  synergy: number;
+  setLiveData: (data: { agents: any[]; synergy: number }) => void;
+}
+
+const useSwarmStore = create<SwarmState>((set) => ({
   agents: [],
   synergy: 0,
   setLiveData: (data) => set({ agents: data.agents, synergy: data.synergy }),
 }));
+// === END OF STORE ===
 
 export default function SwarmNexusV72() {
   const [agents, setAgents] = useState(Array.from({ length: 5 }, (_, i) => ({ id: i, profit: Math.random() * 5000 - 1500 })));
